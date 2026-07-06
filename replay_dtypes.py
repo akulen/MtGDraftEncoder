@@ -41,6 +41,8 @@ COLUMN_TYPES = (
     (re.compile(r"^pick_sideboard_in_rate$"), "float16"),
     (re.compile(r"^pool_.*"), "int8"),
     (re.compile(r"^pack_card_.*"), "int8"),
+
+    (re.compile(r"^pick_2$"), "str"), # Pick 2, Not supported
     # Game + Replay
     (re.compile(r"^game_time$"), "str"),
     (re.compile(r"^build_index$"), "int8"),

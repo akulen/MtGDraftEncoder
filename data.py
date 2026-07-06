@@ -70,9 +70,9 @@ class DL17Lands(Dataset):
             print('#' * 50)
 
     def collect_format(
-        self, stlands, expansions, exclude=None, special_guests=None,
+        self, stlands, expansions=None, exclude=None, special_guests=None,
         thelist=None, include_ext=False, pack_size=None, pad_id=0,
-        data_exclude=None
+        data_exclude=None, cube=None
     ):
         if exclude is None:
             exclude = []
@@ -82,20 +82,25 @@ class DL17Lands(Dataset):
             thelist = []
         assert(len(self.all_cards.filter(pl.col('id') == pad_id)) == 0)
 
-        # We drop cards that only appear in set or collector boosters
-        df_cards = self.all_cards.filter(pl.col('is_booster') == True).filter(
-            (
-                pl.col('expansion').is_in(expansions)
-                & ~pl.col('name').is_in(exclude)
+        if cube is not None:
+            df_cards = self.all_cards
+        elif expansions is not None:
+            # We drop cards that only appear in set or collector boosters
+            df_cards = self.all_cards.filter(pl.col('is_booster') == True).filter(
+                (
+                    pl.col('expansion').is_in(expansions)
+                    & ~pl.col('name').is_in(exclude)
+                )
+                | (
+                    (pl.col('expansion') == 'SPG')
+                    &  pl.col('name').is_in(special_guests)
+                )
+                | (
+                    pl.col('name').is_in(thelist)
+                )
             )
-            | (
-                (pl.col('expansion') == 'SPG')
-                &  pl.col('name').is_in(special_guests)
-            )
-            | (
-                pl.col('name').is_in(thelist)
-            )
-        )
+        else:
+            raise ValueError(f'Either cube or expansions must be defined [{stlands}].')
         # Split cards are listed 3 times (once fully, then once for each half).
         # so we drop the half cards, then rename the full to keep only the
         # first half
@@ -913,7 +918,7 @@ def main():
     data = []
     for exp in [
         'NEO','ONE','MOM','WOE','LCI','MKM','OTJ','BLB','DSK','FDN','DFT','TDM',
-        'FIN','EOE'
+        'FIN','EOE','SOS'
     ]:
         data.append(test_set(exp))
 

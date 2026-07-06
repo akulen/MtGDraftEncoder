@@ -1,7 +1,7 @@
 {
     "NEO": {
         "stlands": "NEO",
-        "expansions": ["NEO"],
+        "expansions": ["NEO"]
     },
     "ONE": {
         "stlands": "ONE",
@@ -239,5 +239,22 @@
             "Sliver Overlord"
         ],
         "pack_size": 13
+    },
+    "SOS": {
+        "stlands": "SOS",
+        "expansions": ["SOS", "SOA"],
+        "special_guests": [
+            "Archaeomancer",
+            "Archmage Emeritus",
+            "Murmuring Mystic",
+            "Grim Haruspex",
+            "Dualcaster Mage",
+            "Magus of the Library",
+            "Sylvan Library",
+            "Adrix and Nev, Twincasters",
+            "Codie, Vociferous Codex",
+            "Library of Alexandria"
+        ],
+        "pack_size": 14
     }
 }

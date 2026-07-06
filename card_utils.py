@@ -11,6 +11,11 @@ from replay_dtypes import get_dtypes
 os.makedirs('data', exist_ok=True)
 CSI = "\x1b[" #]
 
+HEADERS = {
+    'User-Agent': 'MtGDraftEncoder/1.0',
+    'Accept': 'application/json;q=0.9,*/*;q=0.8'
+}
+
 @cache
 def get_all_cards():
     filename = 'data/cards_mtga.csv'
@@ -39,7 +44,9 @@ def get_card_image(card_name):
                 card_image_cache = json.load(file)
     if card_name not in card_image_cache:
         try:
-            response = requests.get(SCRYFALL_BASE_URL.format(card_name))
+            response = requests.get(
+                SCRYFALL_BASE_URL.format(card_name), headers=HEADERS
+            )
             response.raise_for_status()
             card_image_cache[card_name] = response.url
             with open('cache/card_images.json', 'w') as file:
@@ -54,9 +61,9 @@ def get_oracle():
         return pl.read_parquet('data/cards_scryfall.parquet')
     if not os.path.isfile('data/cards_scryfall.json'):
         url = 'https://api.scryfall.com/bulk-data/oracle-cards'
-        response = requests.get(url)
+        response = requests.get(url, headers=HEADERS)
         data = response.json()
-        response = requests.get(data['download_uri'])
+        response = requests.get(data['download_uri'], headers=HEADERS)
         scryfall_oracle = response.json()
         with open('data/cards_scryfall.json', 'w') as file:
             json.dump(scryfall_oracle, file)
@@ -191,7 +198,7 @@ def get_keywords():
     filename = 'data/keywords.json'
     url = "https://api.scryfall.com/catalog/keyword-abilities"
     if not os.path.isfile(filename):
-        keywords = requests.get(url).json()['data']
+        keywords = requests.get(url, headers=HEADERS).json()['data']
         with open(filename, 'w') as file:
             json.dump(keywords, file)
     else:
@@ -311,6 +318,10 @@ def get_draft_df(ext):
         df.sink_parquet(f"{filename}.parquet")
     else:
         df = pl.scan_parquet(f"{filename}.parquet")
+    if 'pick_2' in df.collect_schema().names():
+        values = df.select(pl.col('pick_2').unique()).collect()['pick_2'].to_list()
+        print(f'{CSI}31mPick 2 is not currently supported ({','.join(map(str, values))}).{CSI}0m')
+        df = df.filter(pl.col('pick_2').is_null() | (pl.col('pick_2') == False))
     return df
 
 def fix_split_names(df_cards, ext, verbose=0):
@@ -501,7 +512,7 @@ def get_card_stats(
     if len(c) != len(cs) or len(c - cs) > 0:
         print(f'{CSI}33mWarning: Game card stats probably outdated for {ext}{CSI}0m')
         print(f'{CSI}34m{len(c)} cards requested, but {len(cs)} card stats found.{CSI}0m')
-        print(f'{c-cs} | {cs-c}')
+        # print(f'{c-cs} | {cs-c}')
         # raise Exception(f'Game card stats outdated for {ext}')
     df_cards = df_cards.join(df_stats, on='name', how='left')
 
